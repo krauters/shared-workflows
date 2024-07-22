@@ -1,0 +1,72 @@
+name: Node Release
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: '22'
+      node-cache:
+        required: false
+        type: string
+        default: npm
+      prefix:
+        required: false
+        type: string
+        default: ''
+      suffix:
+        required: false
+        type: string
+        default: ''
+    secrets:
+      # Scopes: Actions:write, Contents:write
+      GH_TOKEN_RELEASES:
+        required: true
+  workflow_dispatch:
+
+jobs:
+  release:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Source Repository
+      uses: actions/checkout@v4
+      with:
+        path: source
+    - name: Checkout Shared Workflow Repository
+      uses: actions/checkout@v4
+      with:
+        repository: krauters/shared-workflows
+        path: shared-workflows
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: ${{ inputs.node-cache }}
+        cache-dependency-path: source/package-lock.json
+    - name: Get Version
+      run: node ./shared-workflows/scripts/get-version.js
+    - name: Check if Tag Exists
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GH_TOKEN_RELEASES }}
+        script: |
+          const script = require('./shared-workflows/scripts/check-tag-exists.js')
+          await script({ github, context })
+    - name: Get Release Name
+      if: env.TAG_EXISTS == 'false'
+      run: node ./shared-workflows/scripts/get-release-name.js
+    - name: Delete Local Tags
+      if: env.TAG_EXISTS == 'false'
+      run: git tag -d $(git tag -l)
+      working-directory: ./source
+    - name: Create GitHub Tag and Release
+      if: env.TAG_EXISTS == 'false'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GH_TOKEN_RELEASES }}
+        script: |
+          const script = require('./shared-workflows/scripts/create-release.js')
+          await script({ github, context })

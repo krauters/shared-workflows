@@ -1,0 +1,55 @@
+name: Node Publish
+
+on:
+  workflow_call:
+    inputs:
+      node_version:
+        required: false
+        type: string
+        default: '22'
+      node_cache:
+        required: false
+        type: string
+        default: npm
+      registry_url:
+        required: false
+        type: string
+      scope:
+        required: false
+        type: string
+        default: krauters
+      dry_run:
+        type: boolean
+        required: false
+        default: false
+      skip_tag_suffix:
+        required: false
+        type: string
+        default: 'private'
+    secrets:
+      NPM_TOKEN:
+        required: true
+  workflow_dispatch:
+
+jobs:
+  publish:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node_version }}
+        registry-url: ${{ inputs.registry_url }}
+        scope: ${{ inputs.scope }}
+        cache: ${{ inputs.node_cache }}
+    - run: npm publish --access public
+      if: ${{ !inputs.dry_run && !endsWith(github.ref_name, inputs.skip_tag_suffix) }}
+      env:
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    - run: npm publish --dry-run --access public
+      if: ${{ inputs.dry_run }}
+      env:
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

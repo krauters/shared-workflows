@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: false
+        type: string
+        default: release-0.0.${{ github.run_number }}
+      release_name:
+        required: false
+        type: string
+        default: ''
+    secrets:
+      # Scopes: Actions:write, Contents:write
+      GH_TOKEN_RELEASES:
+        required: true
+  workflow_dispatch:
+
+jobs:
+  release:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Shared Workflow Repository
+      uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Get Release Name
+      run: node ./scripts/get-release-name.js
+    - name: Create GitHub Tag and Release
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN_RELEASES }}
+      run: |
+        git tag -d $(git tag -l) # Delete local tags as they may conflict with release creation
+        echo "Creating GitHub Release for ${{ inputs.version }}"
+
+        gh release list
+        gh release create "${{ inputs.release_name || env.RELEASE_NAME }} ${{ inputs.version }}" -t "${{ inputs.version }}" --generate-notes
