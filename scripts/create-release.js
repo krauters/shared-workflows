@@ -14,7 +14,8 @@ async function createRelease({ github, context }) {
         name,
         body: 'Automatically generated release notes',
         draft: false,
-        prerelease: false
+        prerelease: false,
+        generate_release_notes: true,
     })
     console.info('GitHub tag and release created successfully.')
 }
