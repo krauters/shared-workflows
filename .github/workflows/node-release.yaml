@@ -3,11 +3,11 @@ name: Node Release
 on:
   workflow_call:
     inputs:
-      node-version:
+      node_version:
         required: false
         type: string
         default: '22'
-      node-cache:
+      node_cache:
         required: false
         type: string
         default: npm
@@ -43,8 +43,8 @@ jobs:
         path: shared-workflows
     - uses: actions/setup-node@v4
       with:
-        node-version: ${{ inputs.node-version }}
-        cache: ${{ inputs.node-cache }}
+        node-version: ${{ inputs.node_version }}
+        cache: ${{ inputs.node_cache }}
         cache-dependency-path: source/package-lock.json
     - name: Get Version
       run: node ./shared-workflows/scripts/get-version.js

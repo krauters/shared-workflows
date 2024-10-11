@@ -7,6 +7,10 @@ on:
         required: false
         type: string
         default: '22'
+      node_install:
+        required: false
+        type: boolean
+        default: false
       node_cache:
         required: false
         type: string
@@ -45,11 +49,13 @@ jobs:
         registry-url: ${{ inputs.registry_url }}
         scope: ${{ inputs.scope }}
         cache: ${{ inputs.node_cache }}
+    - run: npm ci
+      if: inputs.node_install
     - run: npm publish --access public
       if: ${{ !inputs.dry_run && !endsWith(github.ref_name, inputs.skip_tag_suffix) }}
       env:
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     - run: npm publish --dry-run --access public
-      if: ${{ inputs.dry_run }}
+      if: inputs.dry_run
       env:
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
