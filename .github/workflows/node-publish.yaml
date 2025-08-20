@@ -30,6 +30,14 @@ on:
         required: false
         type: string
         default: 'private'
+      workspace:
+        required: false
+        type: string
+        default: ''
+      workspace:
+        required: false
+        type: string
+        default: ''
     secrets:
       NPM_TOKEN:
         required: true
@@ -51,11 +59,19 @@ jobs:
         cache: ${{ inputs.node_cache }}
     - run: npm ci
       if: inputs.node_install
+      env:
+        npm_config_workspace: ${{ inputs.workspace }}
+      env:
+        npm_config_workspace: ${{ inputs.workspace }}
     - run: npm publish --access public
       if: ${{ !inputs.dry_run && !endsWith(github.ref_name, inputs.skip_tag_suffix) }}
       env:
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        npm_config_workspace: ${{ inputs.workspace }}
+        npm_config_workspace: ${{ inputs.workspace }}
     - run: npm publish --dry-run --access public
       if: inputs.dry_run
       env:
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        npm_config_workspace: ${{ inputs.workspace }}
+        npm_config_workspace: ${{ inputs.workspace }}
